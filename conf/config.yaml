@@ -1,0 +1,26 @@
+server:
+  -
+    domain: blog.bigbigban.cn
+    upstream: false
+    urls:
+      - url: http://127.0.0.1:8080
+        weight: 1
+      - url: http://127.0.0.1:8081
+        weight: 1
+    intercept:
+      - sql.yaml
+      - xss.yaml
+  -
+    domain: nginx.bigbigban.cn
+    upstream: true
+    urls:
+      - url: http://127.0.0.1:8082
+        weight: 2
+      - url: http://127.0.0.1:8083
+        weight: 1
+      - url: http://127.0.0.1:8081
+        weight: 3
+    intercept:
+      - sql.yaml
+      - xss.yaml
+      - fastjson.yaml
