@@ -11,28 +11,36 @@
 package intercept
 
 import (
-	"fmt"
 	"gateway/conf"
 	"github.com/gin-gonic/gin"
-	"log"
 	"math/rand"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
 )
 
 func Reserve(c *gin.Context) {
-	host := c.Request.Host
+	var Target *url.URL
 	configData := conf.ReadConfig()
+	host := c.Request.Host
 	config, ok := configData[host]
-	// 如果请求域名不在配置文件中，有可能是通过IP或者localhost进行访问的
+	// 如果请求域名不在配置文件中，有可能是通过IP或者localhost进行访问的，也有可能访问的域名不在配置文件中,直接强制跳转到
 	if !ok {
-		c.String(200, "Welcome to the Wrong-Pixel server！")
-		return
+		re := regexp.MustCompile(`^((\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])\.){3}(\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])$`)
+		if re.MatchString(host) {
+			c.String(200, "Welcome to the Wrong-Pixel server！")
+			return
+		} else if host == "localhost" {
+			c.String(200, "Welcome to the Wrong-Pixel server！")
+			return
+		} else {
+			c.AbortWithStatus(502)
+			return
+		}
 	}
 
-	var target *url.URL
 	if !config.Upstream || len(config.Urls) == 1 {
-		target, _ = url.Parse(config.Urls[0].Url)
+		Target, _ = url.Parse(config.Urls[0].Url)
 	} else {
 		// 计算权重值总和
 		totalWeight := 0
@@ -46,7 +54,7 @@ func Reserve(c *gin.Context) {
 		// 以随机数作为下标选择反向代理的服务器
 		for _, urlConfig := range config.Urls {
 			if i <= urlConfig.Weight {
-				target, _ = url.Parse(urlConfig.Url)
+				Target, _ = url.Parse(urlConfig.Url)
 				break
 			}
 			i -= urlConfig.Weight
@@ -54,16 +62,13 @@ func Reserve(c *gin.Context) {
 	}
 
 	// 创建一个反向代理
-	proxy := httputil.NewSingleHostReverseProxy(target)
+	proxy := httputil.NewSingleHostReverseProxy(Target)
 
 	// 更新请求头使得可以使用SSL重定向
-	c.Request.URL.Host = target.Host
-	c.Request.URL.Scheme = target.Scheme
+	c.Request.URL.Host = Target.Host
+	c.Request.URL.Scheme = Target.Scheme
 	c.Request.Header.Set("X-Forwarded-Host", c.Request.Header.Get("Host"))
-	c.Request.Host = target.Host
 
 	// 反向代理请求
 	proxy.ServeHTTP(c.Writer, c.Request)
-	logMessage := fmt.Sprintf("%s requested %s and was forwarded to %s", c.ClientIP(), host, target.String())
-	log.Printf(logMessage)
 }

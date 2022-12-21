@@ -10,6 +10,7 @@ server:
     intercept:
       - sql.yaml
       - xss.yaml
+    default: true
   -
     domain: nginx.bigbigban.cn
     upstream: true
@@ -24,3 +25,4 @@ server:
       - sql.yaml
       - xss.yaml
       - fastjson.yaml
+    default: false

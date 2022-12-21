@@ -25,6 +25,7 @@ type YamlConfig struct {
 			Weight int    `yaml:"weight"`
 		} `yaml:"urls"`
 		Intercept []string `yaml:"intercept"`
+		Default   bool     `yaml:"default"`
 	} `yaml:"server"`
 }
 
@@ -36,6 +37,7 @@ type ServerConfig struct {
 		Weight int    `yaml:"weight"`
 	} `yaml:"urls"`
 	Intercepts []string `yaml:"intercept"`
+	Default    bool     `yaml:"default"`
 }
 
 func ReadConfig() map[string]ServerConfig {
