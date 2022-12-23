@@ -24,9 +24,9 @@ type YamlConfig struct {
 			Url    string `yaml:"url"`
 			Weight int    `yaml:"weight"`
 		} `yaml:"urls"`
-		Intercept []string `yaml:"intercept"`
-		Default   bool     `yaml:"default"`
+		Default bool `yaml:"default"`
 	} `yaml:"server"`
+	Intercept []string `yaml:"intercept"`
 }
 
 // ServerConfig 用来生成map的server结构体
@@ -36,11 +36,10 @@ type ServerConfig struct {
 		Url    string `yaml:"url"`
 		Weight int    `yaml:"weight"`
 	} `yaml:"urls"`
-	Intercepts []string `yaml:"intercept"`
-	Default    bool     `yaml:"default"`
+	Default bool `yaml:"default"`
 }
 
-func ReadConfig() map[string]ServerConfig {
+func ReadConfig() (map[string]ServerConfig, []string) {
 	// 读取配置
 	data, err := os.ReadFile("./conf/config.yaml")
 	if err != nil {
@@ -52,16 +51,17 @@ func ReadConfig() map[string]ServerConfig {
 	// 定义map
 	serverData := make(map[string]ServerConfig)
 	err = yaml.Unmarshal(data, &configData)
+	pluginList := configData.Intercept
 	if err != nil {
 		panic(err)
 	}
 	// map赋值
 	for _, server := range configData.Server {
 		serverData[server.Domain] = ServerConfig{
-			Upstream:   server.Upstream,
-			Urls:       server.Urls,
-			Intercepts: server.Intercept,
+			Upstream: server.Upstream,
+			Urls:     server.Urls,
+			Default:  server.Default,
 		}
 	}
-	return serverData
+	return serverData, pluginList
 }

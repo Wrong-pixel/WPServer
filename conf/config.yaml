@@ -1,17 +1,15 @@
 server:
   -
+    default: true
     domain: blog.bigbigban.cn
     upstream: false
     urls:
-      - url: http://127.0.0.1:8080
-        weight: 1
       - url: http://127.0.0.1:8081
         weight: 1
-    intercept:
-      - sql.yaml
-      - xss.yaml
-    default: true
+      - url: http://127.0.0.1:8082
+        weight: 1
   -
+    default: false
     domain: nginx.bigbigban.cn
     upstream: true
     urls:
@@ -21,8 +19,7 @@ server:
         weight: 1
       - url: http://127.0.0.1:8081
         weight: 3
-    intercept:
-      - sql.yaml
-      - xss.yaml
-      - fastjson.yaml
-    default: false
+intercept:
+#  - javaVul.yaml
+  - sql.yaml
+#  - xss.yaml
