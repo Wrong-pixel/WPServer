@@ -7,5 +7,5 @@ position:
 #  - head
   - body
 #  - url
-regexp: "(?:')|(?:--)|(/\\*(?:.|[\\n\\r])*?\\*/)|(\b(^.*?select.*?$|^.*?update.*?$|^.*?and.*?$|^.*?or.*?$|^.*?delete.*?$|^.*?insert.*?$|^.*?truncate.*?$|^.*?char.*?$|^.*?into.*?$|^.*?substr.*?$|^.*?ascii.*?$|^.*?declare.*?$|^.*?exec.*?$|^.*?count.*?$|^.*?master.*?$|^.*?into.*?$|^.*?drop.*?$|^.*?execute.*?$)\b)"
+regexp: "(?:'|--|select|update|and|or|delete|insert|truncate|char|into|substr|ascii|declare|exec|count|master|into|drop|execute)"
 count: 2

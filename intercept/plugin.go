@@ -6,9 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v2"
 	"io"
-	"log"
 	"os"
 	"regexp"
+	"strings"
+	"time"
 )
 
 type Plugin struct {
@@ -32,27 +33,26 @@ func UsePlugin(pluginList []string) gin.HandlerFunc {
 			if err != nil {
 				fmt.Println(string(plugins) + "插件加载失败！")
 				return
-			} else {
-				reg, err := regexp.Compile(plugin.Regexp)
-				if err != nil {
-					fmt.Println("插件正则有误！")
-					return
-				}
-				methods := make(map[string]bool, len(plugin.Method))
-				for _, s := range plugin.Method {
-					methods[s] = true
-				}
-				_, ok := methods[context.Request.Method]
-				// 如果请求方式匹配到了
-				if ok {
-					for _, position := range plugin.Position {
-						if position == "head" {
-							checkHead(context, reg, plugin.Count)
-						} else if position == "body" {
-							checkBody(context, reg, plugin.Count)
-						} else if position == "url" {
-							checkUrl(context, reg, plugin.Count)
-						}
+			}
+			reg, err := regexp.Compile(plugin.Regexp)
+			if err != nil {
+				fmt.Println("插件正则有误！")
+				return
+			}
+			methods := make(map[string]bool, len(plugin.Method))
+			for _, s := range plugin.Method {
+				methods[s] = true
+			}
+			_, ok := methods[context.Request.Method]
+			// 如果请求方式匹配到了
+			if ok {
+				for _, position := range plugin.Position {
+					if position == "head" {
+						checkHead(context, reg, plugin.Count)
+					} else if position == "body" {
+						checkBody(context, reg, plugin.Count)
+					} else if position == "url" {
+						checkUrl(context, reg, plugin.Count)
 					}
 				}
 			}
@@ -65,15 +65,35 @@ func checkHead(context *gin.Context, reg *regexp.Regexp, count int) {
 }
 func checkBody(context *gin.Context, reg *regexp.Regexp, count int) {
 	buf, _ := io.ReadAll(context.Request.Body)
-	matches := reg.FindAllString(string(buf), -1)
+	matches := reg.FindAllString(strings.ToLower(string(buf)), -1)
 	if len(matches) >= count {
+		showAttackLog(context)
 		context.AbortWithStatusJSON(403, gin.H{
-			"警告！": "检测异常攻击行为！已记录IP！",
+			"提示": "无所谓，我的WAF会出手",
 		})
-		log.Println("检测到异常攻击行为！")
 	}
 	context.Request.Body = io.NopCloser(bytes.NewReader(buf))
 }
 func checkUrl(context *gin.Context, reg *regexp.Regexp, count int) {
 
+}
+
+func showAttackLog(c *gin.Context) {
+	start := time.Now()
+	timestamp := time.Now()
+	latency := timestamp.Sub(start)
+
+	if latency > time.Minute {
+		latency = latency.Truncate(time.Second)
+	}
+	var log = fmt.Sprintf("[WPServer] %v |%s %s %s| %3v | %s %s => %s %s |%s %s %s %#v",
+		time.Now().Format("2006/01/02 - 15:04:05"),
+		red, c.Request.Method, reset,
+		latency,
+		proxy, c.ClientIP(),
+		c.Request.Host, reset,
+		red, "检测到攻击行为！", reset,
+		c.Request.URL.Path,
+	)
+	fmt.Println(log)
 }
