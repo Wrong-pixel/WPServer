@@ -23,7 +23,7 @@ func UsePlugin(pluginList []string) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		var plugin Plugin
 		for _, plugins := range pluginList {
-			file := "./lib/" + plugins
+			file := "./plugin/" + plugins
 			data, err := os.ReadFile(file)
 			if err != nil {
 				fmt.Println(string(plugins) + "插件加载失败！")
@@ -61,7 +61,18 @@ func UsePlugin(pluginList []string) gin.HandlerFunc {
 }
 
 func checkHead(context *gin.Context, reg *regexp.Regexp, count int) {
-
+	buf := context.Request.Header
+	for _, value := range buf {
+		for _, data := range value {
+			matches := reg.FindAllString(strings.ToLower(data), -1)
+			if len(matches) >= count {
+				showAttackLog(context)
+				context.AbortWithStatusJSON(403, gin.H{
+					"提示": "无所谓，我的WAF会出手",
+				})
+			}
+		}
+	}
 }
 func checkBody(context *gin.Context, reg *regexp.Regexp, count int) {
 	buf, _ := io.ReadAll(context.Request.Body)
@@ -75,7 +86,14 @@ func checkBody(context *gin.Context, reg *regexp.Regexp, count int) {
 	context.Request.Body = io.NopCloser(bytes.NewReader(buf))
 }
 func checkUrl(context *gin.Context, reg *regexp.Regexp, count int) {
-
+	buf := context.Request.RequestURI
+	matches := reg.FindAllString(strings.ToLower(buf), -1)
+	if len(matches) >= count {
+		showAttackLog(context)
+		context.AbortWithStatusJSON(403, gin.H{
+			"提示": "无所谓，我的WAF会出手",
+		})
+	}
 }
 
 func showAttackLog(c *gin.Context) {
