@@ -18,6 +18,7 @@ import (
 	"net/url"
 )
 
+// Reserve 用于反向代理的中间件
 func Reserve(configData map[string]conf.ServerConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var Target *url.URL

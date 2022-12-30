@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// RemoveServer 更新响应头
 func RemoveServer(c *gin.Context) {
 	c.Writer.Header().Del("Server")
 	c.Writer.Header().Add("Server", "WPServer v1.3.1")

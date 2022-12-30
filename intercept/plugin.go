@@ -19,6 +19,7 @@ type Plugin struct {
 	Count    int      `yaml:"count"`
 }
 
+// UsePlugin 是用于漏洞检测的中间件，同时负责攻击log的输出
 func UsePlugin(pluginList []string) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		var plugin Plugin
@@ -60,6 +61,7 @@ func UsePlugin(pluginList []string) gin.HandlerFunc {
 	}
 }
 
+// checkHead 请求头的检查
 func checkHead(context *gin.Context, reg *regexp.Regexp, count int) {
 	buf := context.Request.Header
 	for _, value := range buf {
@@ -75,6 +77,8 @@ func checkHead(context *gin.Context, reg *regexp.Regexp, count int) {
 		}
 	}
 }
+
+// checkBody 请求体的内容的检查
 func checkBody(context *gin.Context, reg *regexp.Regexp, count int) {
 	buf, _ := io.ReadAll(context.Request.Body)
 	matches := reg.FindAllString(strings.ToLower(string(buf)), -1)
@@ -87,6 +91,8 @@ func checkBody(context *gin.Context, reg *regexp.Regexp, count int) {
 	}
 	context.Request.Body = io.NopCloser(bytes.NewReader(buf))
 }
+
+// checkUrl 请求url的检查
 func checkUrl(context *gin.Context, reg *regexp.Regexp, count int) {
 	buf := context.Request.RequestURI
 	matches := reg.FindAllString(strings.ToLower(buf), -1)
@@ -99,6 +105,7 @@ func checkUrl(context *gin.Context, reg *regexp.Regexp, count int) {
 	}
 }
 
+// showAttackLog 打印攻击日志
 func showAttackLog(c *gin.Context) {
 	start := time.Now()
 	timestamp := time.Now()

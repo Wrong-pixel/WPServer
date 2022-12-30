@@ -86,6 +86,7 @@ func (p *LogFormatterParams) ResetColor() string {
 	return reset
 }
 
+// Logger 重写了GIN框架的Logger，主要是为了自定义日志格式
 func Logger(c *gin.Context) {
 	start := time.Now()
 	path := c.Request.URL.Path
