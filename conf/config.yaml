@@ -20,6 +20,6 @@ server:
       - url: http://127.0.0.1:8081
         weight: 3
 intercept:
-#  - javaVul.yaml
+  - javaVul.yaml
   - sql.yaml
-#  - xss.yaml
+  - xss.yaml

@@ -1,0 +1,11 @@
+method:
+  - GET
+  - POST
+  - OPTION
+  - PUT
+position:
+  - head
+  - body
+  - url
+regexp: (<[^>]+>|<script.*?>|on[a-z]+\s*=)
+count: 1

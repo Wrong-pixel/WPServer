@@ -1,0 +1,11 @@
+method:
+  - GET
+  - POST
+  - OPTION
+  - PUT
+position:
+  - head
+  - body
+  - url
+regexp: (?:@type|\${)
+count: 1

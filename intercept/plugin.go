@@ -26,12 +26,12 @@ func UsePlugin(pluginList []string) gin.HandlerFunc {
 			file := "./plugin/" + plugins
 			data, err := os.ReadFile(file)
 			if err != nil {
-				fmt.Println(string(plugins) + "插件加载失败！")
+				fmt.Println("没有找到" + string(plugins) + "，请检查插件路径")
 				return
 			}
 			err = yaml.Unmarshal(data, &plugin)
 			if err != nil {
-				fmt.Println(string(plugins) + "插件加载失败！")
+				fmt.Println(string(plugins) + "加载失败！" + err.Error())
 				return
 			}
 			reg, err := regexp.Compile(plugin.Regexp)
@@ -70,6 +70,7 @@ func checkHead(context *gin.Context, reg *regexp.Regexp, count int) {
 				context.AbortWithStatusJSON(403, gin.H{
 					"提示": "无所谓，我的WAF会出手",
 				})
+				return
 			}
 		}
 	}
@@ -82,6 +83,7 @@ func checkBody(context *gin.Context, reg *regexp.Regexp, count int) {
 		context.AbortWithStatusJSON(403, gin.H{
 			"提示": "无所谓，我的WAF会出手",
 		})
+		return
 	}
 	context.Request.Body = io.NopCloser(bytes.NewReader(buf))
 }
@@ -93,6 +95,7 @@ func checkUrl(context *gin.Context, reg *regexp.Regexp, count int) {
 		context.AbortWithStatusJSON(403, gin.H{
 			"提示": "无所谓，我的WAF会出手",
 		})
+		return
 	}
 }
 
