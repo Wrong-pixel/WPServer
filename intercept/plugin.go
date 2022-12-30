@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v2"
 	"io"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -69,9 +70,12 @@ func checkHead(context *gin.Context, reg *regexp.Regexp, count int) {
 			matches := reg.FindAllString(strings.ToLower(data), -1)
 			if len(matches) >= count {
 				showAttackLog(context)
-				context.AbortWithStatusJSON(403, gin.H{
-					"提示": "无所谓，我的WAF会出手",
+				context.HTML(403, "403.html", gin.H{
+					"time":   time.Now(),
+					"Client": context.Request.Header.Get("User-Agent"),
+					"Ip":     context.ClientIP(),
 				})
+				context.Abort()
 				return
 			}
 		}
@@ -84,9 +88,12 @@ func checkBody(context *gin.Context, reg *regexp.Regexp, count int) {
 	matches := reg.FindAllString(strings.ToLower(string(buf)), -1)
 	if len(matches) >= count {
 		showAttackLog(context)
-		context.AbortWithStatusJSON(403, gin.H{
-			"提示": "无所谓，我的WAF会出手",
+		context.HTML(403, "403.html", gin.H{
+			"time":   time.Now(),
+			"Client": context.Request.Header.Get("User-Agent"),
+			"Ip":     context.ClientIP(),
 		})
+		context.Abort()
 		return
 	}
 	context.Request.Body = io.NopCloser(bytes.NewReader(buf))
@@ -95,12 +102,16 @@ func checkBody(context *gin.Context, reg *regexp.Regexp, count int) {
 // checkUrl 请求url的检查
 func checkUrl(context *gin.Context, reg *regexp.Regexp, count int) {
 	buf := context.Request.RequestURI
+	buf, _ = url.QueryUnescape(buf)
 	matches := reg.FindAllString(strings.ToLower(buf), -1)
 	if len(matches) >= count {
 		showAttackLog(context)
-		context.AbortWithStatusJSON(403, gin.H{
-			"提示": "无所谓，我的WAF会出手",
+		context.HTML(403, "403.html", gin.H{
+			"time":   time.Now(),
+			"Client": context.Request.Header.Get("User-Agent"),
+			"Ip":     context.ClientIP(),
 		})
+		context.Abort()
 		return
 	}
 }

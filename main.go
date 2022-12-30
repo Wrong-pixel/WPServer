@@ -9,6 +9,7 @@ import (
 func main() {
 	var config, pluginList = conf.ReadConfig()
 	r := gin.New()
+	r.LoadHTMLGlob("templates/*")
 	r.Use(gin.Recovery(), intercept.UsePlugin(pluginList), intercept.Reserve(config), intercept.Logger, intercept.RemoveServer)
 	err := r.Run(":80")
 	if err != nil {

@@ -7,5 +7,5 @@ position:
   - head
   - body
   - url
-regexp: (?:'|--|select|update|and|or|delete|insert|truncate|char|into|substr|ascii|declare|exec|count|master|into|drop|execute)
+regexp: (?:'|--|select|update|and|or|delete|insert|truncate|char|into|substr|ascii|declare|exec|count|master|drop|execute|union|database|tables|columns|order by)
 count: 2
