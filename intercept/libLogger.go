@@ -3,7 +3,9 @@ package intercept
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -88,6 +90,11 @@ func (p *LogFormatterParams) ResetColor() string {
 
 // Logger 重写了GIN框架的Logger，主要是为了自定义日志格式
 func Logger(c *gin.Context) {
+	logFile, err := os.OpenFile("./log/access.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println(err)
+	}
+	log.SetOutput(logFile)
 	start := time.Now()
 	path := c.Request.URL.Path
 	raw := c.Request.URL.RawQuery
@@ -116,7 +123,7 @@ func Logger(c *gin.Context) {
 	if param.Latency > time.Minute {
 		param.Latency = param.Latency.Truncate(time.Second)
 	}
-	var log = fmt.Sprintf("[WPServer] %v |%s %3d %s| %3v | %s %s => %s => %s %s |%s %-7s %s %#v",
+	var accessLog = fmt.Sprintf("[WPServer] %v |%s %3d %s| %3v | %s %s => %s => %s %s |%s %-7s %s %#v",
 		param.TimeStamp.Format("2006/01/02 - 15:04:05"),
 		statusColor, param.StatusCode, resetColor,
 		param.Latency,
@@ -126,6 +133,16 @@ func Logger(c *gin.Context) {
 		methodColor, param.Method, resetColor,
 		param.Path,
 	)
-	fmt.Println(log)
+	fmt.Println(accessLog)
+	var writeLog = fmt.Sprintf("|%3d| %3v | %s => %s => %s |%-7s %#v",
+		param.StatusCode,
+		param.Latency,
+		param.ClientIP,
+		c.Request.Host,
+		c.Request.URL.Host,
+		param.Method,
+		param.Path,
+	)
+	log.Println(writeLog)
 	c.Next()
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v2"
 	"io"
+	"log"
 	"net/url"
 	"os"
 	"regexp"
@@ -24,16 +25,16 @@ type Plugin struct {
 func UsePlugin(pluginList []string) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		var plugin Plugin
-		for _, plugins := range pluginList {
-			file := "./plugin/" + plugins
+		for _, pluginName := range pluginList {
+			file := "./plugin/" + pluginName
 			data, err := os.ReadFile(file)
 			if err != nil {
-				fmt.Println("没有找到" + string(plugins) + "，请检查插件路径")
+				fmt.Println("没有找到" + pluginName + "，请检查插件路径")
 				return
 			}
 			err = yaml.Unmarshal(data, &plugin)
 			if err != nil {
-				fmt.Println(string(plugins) + "加载失败！" + err.Error())
+				fmt.Println(pluginName + "加载失败！" + err.Error())
 				return
 			}
 			reg, err := regexp.Compile(plugin.Regexp)
@@ -50,11 +51,11 @@ func UsePlugin(pluginList []string) gin.HandlerFunc {
 			if ok {
 				for _, position := range plugin.Position {
 					if position == "head" {
-						checkHead(context, reg, plugin.Count)
+						checkHead(context, reg, plugin.Count, pluginName)
 					} else if position == "body" {
-						checkBody(context, reg, plugin.Count)
+						checkBody(context, reg, plugin.Count, pluginName)
 					} else if position == "url" {
-						checkUrl(context, reg, plugin.Count)
+						checkUrl(context, reg, plugin.Count, pluginName)
 					}
 				}
 			}
@@ -63,13 +64,13 @@ func UsePlugin(pluginList []string) gin.HandlerFunc {
 }
 
 // checkHead 请求头的检查
-func checkHead(context *gin.Context, reg *regexp.Regexp, count int) {
+func checkHead(context *gin.Context, reg *regexp.Regexp, count int, pluginName string) {
 	buf := context.Request.Header
 	for _, value := range buf {
 		for _, data := range value {
 			matches := reg.FindAllString(strings.ToLower(data), -1)
 			if len(matches) >= count {
-				showAttackLog(context)
+				showAttackLog(context, pluginName)
 				context.HTML(403, "403.html", gin.H{
 					"time":   time.Now(),
 					"Client": context.Request.Header.Get("User-Agent"),
@@ -83,11 +84,11 @@ func checkHead(context *gin.Context, reg *regexp.Regexp, count int) {
 }
 
 // checkBody 请求体的内容的检查
-func checkBody(context *gin.Context, reg *regexp.Regexp, count int) {
+func checkBody(context *gin.Context, reg *regexp.Regexp, count int, pluginName string) {
 	buf, _ := io.ReadAll(context.Request.Body)
 	matches := reg.FindAllString(strings.ToLower(string(buf)), -1)
 	if len(matches) >= count {
-		showAttackLog(context)
+		showAttackLog(context, pluginName)
 		context.HTML(403, "403.html", gin.H{
 			"time":   time.Now(),
 			"Client": context.Request.Header.Get("User-Agent"),
@@ -100,12 +101,12 @@ func checkBody(context *gin.Context, reg *regexp.Regexp, count int) {
 }
 
 // checkUrl 请求url的检查
-func checkUrl(context *gin.Context, reg *regexp.Regexp, count int) {
+func checkUrl(context *gin.Context, reg *regexp.Regexp, count int, pluginName string) {
 	buf := context.Request.RequestURI
 	buf, _ = url.QueryUnescape(buf)
 	matches := reg.FindAllString(strings.ToLower(buf), -1)
 	if len(matches) >= count {
-		showAttackLog(context)
+		showAttackLog(context, pluginName)
 		context.HTML(403, "403.html", gin.H{
 			"time":   time.Now(),
 			"Client": context.Request.Header.Get("User-Agent"),
@@ -117,7 +118,12 @@ func checkUrl(context *gin.Context, reg *regexp.Regexp, count int) {
 }
 
 // showAttackLog 打印攻击日志
-func showAttackLog(c *gin.Context) {
+func showAttackLog(c *gin.Context, pluginName string) {
+	logFile, err := os.OpenFile("./log/deny.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println(err)
+	}
+	log.SetOutput(logFile)
 	start := time.Now()
 	timestamp := time.Now()
 	latency := timestamp.Sub(start)
@@ -125,14 +131,23 @@ func showAttackLog(c *gin.Context) {
 	if latency > time.Minute {
 		latency = latency.Truncate(time.Second)
 	}
-	var log = fmt.Sprintf("[WPServer] %v |%s %s %s| %3v | %s %s => %s %s |%s %s %s %#v",
+	var denyLog = fmt.Sprintf("[WPServer] %v |%s %s %s| %3v | %s %s => %s %s |%s %s%s %s %#v",
 		time.Now().Format("2006/01/02 - 15:04:05"),
 		red, c.Request.Method, reset,
 		latency,
 		proxy, c.ClientIP(),
 		c.Request.Host, reset,
-		red, "检测到攻击行为！", reset,
+		red, "检测到攻击行为！匹配模板：", pluginName, reset,
 		c.Request.URL.Path,
 	)
-	fmt.Println(log)
+	fmt.Println(denyLog)
+	var writeLog = fmt.Sprintf("|%s| %3v | %s => %s |%s%s %#v",
+		c.Request.Method,
+		latency,
+		c.ClientIP(),
+		c.Request.Host,
+		"检测到攻击行为！匹配模板：", pluginName,
+		c.Request.URL.Path,
+	)
+	log.Println(writeLog)
 }
