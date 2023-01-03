@@ -134,9 +134,8 @@ func Logger(c *gin.Context) {
 		param.Path,
 	)
 	fmt.Println(accessLog)
-	var writeLog = fmt.Sprintf("|%3d| %3v | %s => %s => %s |%-7s %#v",
+	var writeLog = fmt.Sprintf("|%3d| %s => %s => %s |%-7s %#v",
 		param.StatusCode,
-		param.Latency,
 		param.ClientIP,
 		c.Request.Host,
 		c.Request.URL.Host,

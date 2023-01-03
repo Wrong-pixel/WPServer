@@ -150,9 +150,8 @@ func showAttackLog(c *gin.Context, pluginName string) {
 		c.Request.URL.Path,
 	)
 	fmt.Println(denyLog)
-	var writeLog = fmt.Sprintf("|%s| %3v | %s => %s |%s%s %#v",
+	var writeLog = fmt.Sprintf("|%s| %s => %s |%s%s %#v",
 		c.Request.Method,
-		latency,
 		c.ClientIP(),
 		c.Request.Host,
 		"检测到攻击行为！匹配模板：", pluginName,
