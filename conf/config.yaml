@@ -23,3 +23,4 @@ intercept:
   - javaVul.yaml
   - SQLInjsection.yaml
   - xss.yaml
+  - others.yaml

@@ -51,11 +51,17 @@ func UsePlugin(pluginList []string) gin.HandlerFunc {
 			if ok {
 				for _, position := range plugin.Position {
 					if position == "head" {
-						checkHead(context, reg, plugin.Count, pluginName)
+						if checkHead(context, reg, plugin.Count, pluginName) {
+							return
+						}
 					} else if position == "body" {
-						checkBody(context, reg, plugin.Count, pluginName)
+						if checkBody(context, reg, plugin.Count, pluginName) {
+							return
+						}
 					} else if position == "url" {
-						checkUrl(context, reg, plugin.Count, pluginName)
+						if checkUrl(context, reg, plugin.Count, pluginName) {
+							return
+						}
 					}
 				}
 			}
@@ -64,7 +70,7 @@ func UsePlugin(pluginList []string) gin.HandlerFunc {
 }
 
 // checkHead 请求头的检查
-func checkHead(context *gin.Context, reg *regexp.Regexp, count int, pluginName string) {
+func checkHead(context *gin.Context, reg *regexp.Regexp, count int, pluginName string) bool {
 	buf := context.Request.Header
 	for _, value := range buf {
 		for _, data := range value {
@@ -77,14 +83,15 @@ func checkHead(context *gin.Context, reg *regexp.Regexp, count int, pluginName s
 					"Ip":     context.ClientIP(),
 				})
 				context.Abort()
-				return
+				return true
 			}
 		}
 	}
+	return false
 }
 
 // checkBody 请求体的内容的检查
-func checkBody(context *gin.Context, reg *regexp.Regexp, count int, pluginName string) {
+func checkBody(context *gin.Context, reg *regexp.Regexp, count int, pluginName string) bool {
 	buf, _ := io.ReadAll(context.Request.Body)
 	matches := reg.FindAllString(strings.ToLower(string(buf)), -1)
 	if len(matches) >= count {
@@ -95,13 +102,14 @@ func checkBody(context *gin.Context, reg *regexp.Regexp, count int, pluginName s
 			"Ip":     context.ClientIP(),
 		})
 		context.Abort()
-		return
+		return true
 	}
 	context.Request.Body = io.NopCloser(bytes.NewReader(buf))
+	return false
 }
 
 // checkUrl 请求url的检查
-func checkUrl(context *gin.Context, reg *regexp.Regexp, count int, pluginName string) {
+func checkUrl(context *gin.Context, reg *regexp.Regexp, count int, pluginName string) bool {
 	buf := context.Request.RequestURI
 	buf, _ = url.QueryUnescape(buf)
 	matches := reg.FindAllString(strings.ToLower(buf), -1)
@@ -113,8 +121,9 @@ func checkUrl(context *gin.Context, reg *regexp.Regexp, count int, pluginName st
 			"Ip":     context.ClientIP(),
 		})
 		context.Abort()
-		return
+		return true
 	}
+	return false
 }
 
 // showAttackLog 打印攻击日志

@@ -5,5 +5,5 @@ method:
 position:
   - body
   - url
-regexp: (<[^>]+>|<script.*?>|on[a-z]+\s*=)
+regexp: (?:../|password|/etc)
 count: 1
