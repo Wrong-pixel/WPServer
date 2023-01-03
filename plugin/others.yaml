@@ -5,5 +5,5 @@ method:
 position:
   - body
   - url
-regexp: (?:../|/password|/etc)
+regexp: (?:../|\/passwd|\/etc|passwd|etc)
 count: 1

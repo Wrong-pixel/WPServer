@@ -54,16 +54,44 @@ func Reserve(configData map[string]conf.ServerConfig) gin.HandlerFunc {
 				i -= urlConfig.Weight
 			}
 		}
-
 		// 创建一个反向代理
 		proxy := httputil.NewSingleHostReverseProxy(Target)
-
 		// 更新请求头使得可以使用SSL重定向
 		c.Request.URL.Host = Target.Host
 		c.Request.URL.Scheme = Target.Scheme
 		c.Request.Header.Set("X-Forwarded-Host", c.Request.Header.Get("Host"))
-
 		// 反向代理请求
 		proxy.ServeHTTP(c.Writer, c.Request)
+
+		//if config.UseSSL == true {
+		//	keyPEM, _ := os.ReadFile("./certs" + config.KeyFile)
+		//	crtPEM, _ := os.ReadFile("./certs" + config.CertFile)
+		//	serveHTTPS(Target, crtPEM, keyPEM)
+		//} else {
+		//	// 反向代理
+		//	serveHTTP(Target, c)
+		//}
+
 	}
 }
+
+//func serveHTTP(Target *url.URL, c *gin.Context) {
+//	// 创建一个反向代理
+//	proxy := httputil.NewSingleHostReverseProxy(Target)
+//	// 更新请求头使得可以使用SSL重定向
+//	c.Request.URL.Host = Target.Host
+//	c.Request.URL.Scheme = Target.Scheme
+//	c.Request.Header.Set("X-Forwarded-Host", c.Request.Header.Get("Host"))
+//	// 反向代理请求
+//	proxy.ServeHTTP(c.Writer, c.Request)
+//}
+
+//func serveHTTPS(Target *url.URL, crtPEM []byte, keyPEM []byte) {
+//	cert, _ := tls.X509KeyPair(crtPEM, keyPEM)
+//	tlsConfig := &tls.Config{
+//		Certificates: []tls.Certificate{cert},
+//	}
+//	Target.Scheme = "https"
+//	proxy := httputil.NewSingleHostReverseProxy(Target)
+//	proxy.Transport = &http.Transport{TLSClientConfig: tlsConfig}
+//}
