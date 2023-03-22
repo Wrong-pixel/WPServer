@@ -1,4 +1,4 @@
-# WPServer
+# WPServer(废弃项目)
 
 **基于yaml插件实现软件WAF的反向代理网关**
 
