@@ -21,6 +21,6 @@ server:
         weight: 3
 intercept:
   - javaVul.yaml
-  - SQLInjsection.yaml
+  - SQLInjection.yaml
   - xss.yaml
   - others.yaml
